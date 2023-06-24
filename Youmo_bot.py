@@ -21,7 +21,7 @@ min_char = 10  # 发言最少 10 个字才会被选中
 interval = 5  # 每隔 5 分钟执行一次检查
 submission_num = 15  # 每次请求最新的 15 个主贴
 comment_num = 30  # 每次请求最新的 30 条评论
-comment_rate = 1  # 每轮检测时，有 70% 的概率遍历评论尝试回复；其余情况仅遍历主贴
+comment_rate = 0.7  # 每轮随机触发检查时，有 70% 的概率遍历评论尝试回复；其余情况仅遍历主贴
 random_check_rate = 6  # 每多少次检查进行一次随机触发检查。0 代表不进行随机触发检查。默认只检查有没有人召唤 bot
 
 removed_content_list = ["[removed]", "[deleted]", "[ Removed by Reddit ]"]
@@ -38,7 +38,7 @@ ignored_content = set()
 pickle_path = "./replied.pkl"
 archived_pickle_path = "./replied.pkl.arc"
 
-i = 0
+i = 1
 
 prompt = '''
 [system][#additional_instructions]
@@ -318,7 +318,7 @@ def task():
     comment = None
     context_str = submission_list_to_context(submission_list)
     context_str += prompt
-    if random.random() < comment_rate:
+    if method == "at_me" or random.random() < comment_rate:
         comment = traverse_comments(comment_list, method)
         if comment is not None:
             ancestors = find_comment_ancestors(comment)
