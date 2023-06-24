@@ -300,7 +300,7 @@ async def sydney_reply(content, context, method="random"):
                 print("Failed attempt, trying again...")
                 failed = True
                 continue
-            reply += "\n\nI am a bot, and this action was performed automatically. Please [contact me](https://www.reddit.com/r/Youmo/comments/149rn69) if you have any questions or concerns."
+            reply += "\n\nI am a bot, and this action was performed automatically. Please [contact me](https://www.reddit.com/r/Youmo/comments/14ho5u6) if you have any questions or concerns."
             content.reply(reply)
             return
         except Exception as e:
@@ -310,7 +310,7 @@ async def sydney_reply(content, context, method="random"):
     if method == "at_me":
         reply = "抱歉，本贴主贴或评论会触发必应过滤器。这条回复是预置的，仅用于提醒此情况下虽然召唤了bot也无法回复。"
         print("reply = " + reply)
-        reply += "\n\nI am a bot, and this action was performed automatically. Please [contact me](https://www.reddit.com/r/Youmo/comments/149rn69) if you have any questions or concerns."
+        reply += "\n\nI am a bot, and this action was performed automatically. Please [contact me](https://www.reddit.com/r/Youmo/comments/14ho5u6) if you have any questions or concerns."
         content.reply(reply)
 
 
