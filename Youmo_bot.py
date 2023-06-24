@@ -222,8 +222,9 @@ def build_comment_context(comment, ancestors):
 def traverse_comments(comment_list, method="random"):
     global ignored_content
     for comment in comment_list:
-        if "preview.redd.it" in comment.body or len(comment.body) <= min_char:
-            continue
+        if method == "random":
+            if "preview.redd.it" in comment.body or len(comment.body) <= min_char:
+                continue
         if check_status(comment) != "normal":
             continue
         if method == "at_me" and not check_at_me(comment):
@@ -246,8 +247,9 @@ def traverse_comments(comment_list, method="random"):
 def traverse_submissions(submission_list, method="random"):
     global ignored_content
     for submission in submission_list:
-        if not submission.is_self or "preview.redd.it" in submission.selftext or (len(submission.title) + len(submission.selftext)) <= min_char:
-            continue
+        if method == "random":
+            if not submission.is_self or "preview.redd.it" in submission.selftext or (len(submission.title) + len(submission.selftext)) <= min_char:
+                continue
         if check_status(submission) != "normal":
             continue
         if method == "at_me" and not check_at_me(submission):
