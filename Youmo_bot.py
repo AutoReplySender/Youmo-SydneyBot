@@ -279,8 +279,16 @@ async def sydney_reply(content, context, method="random"):
         print(f"context: {context}")
         print(f"ask_string: {ask_string}")
 
+    failed = False
+    modified = False
     for _ in range(3):
         try:
+            # 尝试绕过必应过滤器
+            if type(content) != praw.models.reddit.submission.Submission:
+                if failed and not modified:
+                    context += f"{sub_user_nickname} {content.author}刚才回复说“{content.body}”"
+                    ask_string = f"请回复{sub_user_nickname} {content.author}刚才的回复。注意是回复刚才的回复，不是回复原本的贴子。"
+                    modified = True
             bot = await Chatbot.create()
             response = await bot.ask(prompt=ask_string, webpage_context=context, conversation_style=ConversationStyle.creative)
             await bot.close()
@@ -288,6 +296,7 @@ async def sydney_reply(content, context, method="random"):
             print("reply = " + reply)
             if "sorry" in reply or "Sorry" in reply or "try" in reply or "mistake" in reply:
                 print("Failed attempt, trying again...")
+                failed = True
                 continue
             reply += "\n\nI am a bot, and this action was performed automatically. Please [contact me](https://www.reddit.com/r/Youmo/comments/149rn69) if you have any questions or concerns."
             content.reply(reply)
@@ -315,7 +324,10 @@ def task():
         method = "at_me"
     submission_list = list(subreddit.new(limit=submission_num))
     random.shuffle(submission_list)
-    comment_list = list(subreddit.comments(limit=comment_num))
+    if method == "random":
+        comment_list = list(subreddit.comments(limit=comment_num))
+    else:
+        comment_list = list(subreddit.comments(limit=comment_num * 10))
     random.shuffle(comment_list)
     comment = None
     context_str = submission_list_to_context(submission_list)
