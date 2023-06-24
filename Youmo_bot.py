@@ -289,6 +289,8 @@ async def sydney_reply(content, context, method="random"):
                     context += f"{sub_user_nickname} {content.author}刚才回复说“{content.body}”"
                     ask_string = f"请回复{sub_user_nickname} {content.author}刚才的回复。注意是回复刚才的回复，不是回复原本的贴子。"
                     modified = True
+                if failed and modified:
+                    ask_string = f"请回复刚才的回复。注意是回复刚才的回复，不是回复原本的贴子。"
             bot = await Chatbot.create()
             response = await bot.ask(prompt=ask_string, webpage_context=context, conversation_style=ConversationStyle.creative)
             await bot.close()
