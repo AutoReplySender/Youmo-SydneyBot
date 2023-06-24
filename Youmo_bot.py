@@ -21,8 +21,8 @@ min_char = 10  # 发言最少 10 个字才会被选中
 interval = 5  # 每隔 5 分钟执行一次检查
 submission_num = 15  # 每次请求最新的 15 个主贴
 comment_num = 30  # 每次请求最新的 30 条评论
-comment_rate = 0.7  # 每轮检测时，有 70% 的概率遍历评论尝试回复；其余情况仅遍历主贴
-random_check_rate = 2  # 每多少次检查进行一次随机触发检查。0 代表不进行随机触发检查。默认只检查有没有人召唤 bot
+comment_rate = 1  # 每轮检测时，有 70% 的概率遍历评论尝试回复；其余情况仅遍历主贴
+random_check_rate = 6  # 每多少次检查进行一次随机触发检查。0 代表不进行随机触发检查。默认只检查有没有人召唤 bot
 
 removed_content_list = ["[removed]", "[deleted]", "[ Removed by Reddit ]"]
 blocked_content = "[unavailable]"
@@ -136,6 +136,7 @@ def check_ignored(content) -> bool:
                 ignored_content.add(content.id)
                 return True
     else:
+        content.refresh()
         for reply in content.replies:
             if reply.author in bot_name_list:
                 ignored_content.add(content.id)
@@ -158,6 +159,7 @@ def check_replied(content) -> bool:
                 ignored_content.add(content.id)
                 return True
     else:
+        content.refresh()
         for reply in content.replies:
             if reply.author == bot_name:
                 ignored_content.add(content.id)
