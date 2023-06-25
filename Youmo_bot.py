@@ -117,7 +117,7 @@ def check_at_me(content) -> bool:
     if check_str.lower().find(f"u/{bot_name}".lower()) != -1 or re.search(bot_nickname, check_str) is not None:
         return True
     if type(content) == praw.models.reddit.submission.Submission:
-        if content.title.lower().find(f"u/{bot_name}".lower()) != -1 or re.search(bot_nickname, check_str) is not None:
+        if content.title.lower().find(f"u/{bot_name}".lower()) != -1 or re.search(bot_nickname, content.title) is not None:
             return True
     return False
 
