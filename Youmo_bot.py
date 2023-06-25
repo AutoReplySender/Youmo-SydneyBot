@@ -8,6 +8,7 @@ from EdgeGPT import Chatbot, ConversationStyle
 from apscheduler.schedulers.blocking import BlockingScheduler
 import bleach
 import asyncio
+import re
 
 bot_name = ""  # 账号名称
 password = ""  # 账号密码
@@ -18,15 +19,15 @@ user_agent = "autoreply bot created by u/NoMouseLeftBehind."  # 这一项可以�
 subreddit_name = "youmo"  # 在哪个 subreddit 运行
 
 min_char = 10  # 发言最少 10 个字才会被选中
-interval = 5  # 每隔 5 分钟执行一次检查
+interval = 2  # 每隔 2 分钟执行一次检查
 submission_num = 15  # 每次请求最新的 15 个主贴
-comment_num = 30  # 每次请求最新的 30 条评论
+comment_num = 30  # 每次随机触发时，请求最新的 30 条评论
 comment_rate = 0.7  # 每轮随机触发检查时，有 70% 的概率遍历评论尝试回复；其余情况仅遍历主贴
-random_check_rate = 6  # 每多少次检查进行一次随机触发检查。0 代表不进行随机触发检查。默认只检查有没有人召唤 bot
+random_check_rate = 15  # 每多少次检查进行一次随机触发检查。0 代表不进行随机触发检查。默认只检查有没有人召唤 bot
 
 removed_content_list = ["[removed]", "[deleted]", "[ Removed by Reddit ]"]
 blocked_content = "[unavailable]"
-bot_nickname = "鸭鸭"
+bot_nickname = r'[鸭|鴨]{2}'
 sub_user_nickname = "默友"
 
 reddit = None
@@ -113,10 +114,10 @@ def check_status(content) -> str:
 def check_at_me(content) -> bool:
     check_str = (content.selftext if (type(content) ==
                  praw.models.reddit.submission.Submission) else content.body)
-    if check_str.lower().find(f"u/{bot_name}".lower()) != -1 or check_str.lower().find(bot_nickname.lower()) != -1:
+    if check_str.lower().find(f"u/{bot_name}".lower()) != -1 or re.search(bot_nickname, check_str) is not None:
         return True
     if type(content) == praw.models.reddit.submission.Submission:
-        if content.title.lower().find(f"u/{bot_name}".lower()) != -1 or content.title.lower().find(bot_nickname.lower()) != -1:
+        if content.title.lower().find(f"u/{bot_name}".lower()) != -1 or re.search(bot_nickname, check_str) is not None:
             return True
     return False
 
