@@ -35,6 +35,8 @@ subreddit = None
 bot_name_list = None
 ignore_name_list = None
 
+blacklist = None  # 拉黑的是滥用本 bot 的用户。除非也想拉黑滥用本 bot 的用户，不建议照搬此名单
+
 ignored_content = set()
 pickle_path = "./replied.pkl"
 archived_pickle_path = "./replied.pkl.arc"
@@ -72,15 +74,21 @@ def init():
     global ignored_content
     global bot_name_list
     global ignore_name_list
+    global blacklist
     reddit = praw.Reddit(client_id=client_id, client_secret=client_secret,
                          password=password, user_agent=user_agent, username=bot_name)
     subreddit = reddit.subreddit(subreddit_name)
 
-    # 读取 bot 列表和黑名单用户
+    # 读取 bot 列表和忽略名单用户
     submission = reddit.submission("14hlzpi")
     result = json.loads("\n".join(submission.selftext.split("\n")[1:-1]))
     bot_name_list = result["bot_account"]
     ignore_name_list = result["blocked_account"]
+
+    # 读取黑名单用户
+    comment = reddit.comment("jpjv4ml")
+    result = json.loads("\n".join(comment.body.split("\n")[1:-1]))
+    blacklist = result["blacklist"]
 
     if os.path.exists(pickle_path):
         with open(pickle_path, "rb") as pkl:
@@ -130,6 +138,8 @@ def check_ignored(content) -> bool:
     if content.author in ignore_name_list or content.author in bot_name_list:
         ignored_content.add(content.id)
         return True
+    if content.author in blacklist:
+        return True
     if type(content) == praw.models.reddit.submission.Submission:
         content.comments.replace_more(limit=0)
         for comment in content.comments:
@@ -152,6 +162,8 @@ def check_replied(content) -> bool:
         return True
     if content.author in bot_name_list:
         ignored_content.add(content.id)
+        return True
+    if content.author in blacklist:
         return True
     if type(content) == praw.models.reddit.submission.Submission:
         content.comments.replace_more(limit=0)
@@ -301,7 +313,7 @@ async def sydney_reply(content, context, method="random"):
                 print("Failed attempt, trying again...")
                 failed = True
                 continue
-            reply += "\n\nI am a bot, and this action was performed automatically. Please [contact me](https://www.reddit.com/r/Youmo/comments/14ho5u6) if you have any questions or concerns."
+            reply += "\n\n*I am a bot, and this action was performed automatically. Please [contact me](https://www.reddit.com/r/Youmo/comments/14ho5u6) if you have any questions or concerns.*"
             content.reply(reply)
             return
         except Exception as e:
@@ -311,7 +323,7 @@ async def sydney_reply(content, context, method="random"):
     if method == "at_me":
         reply = "抱歉，本贴主贴或评论会触发必应过滤器。这条回复是预置的，仅用于提醒此情况下虽然召唤了bot也无法回复。"
         print("reply = " + reply)
-        reply += "\n\nI am a bot, and this action was performed automatically. Please [contact me](https://www.reddit.com/r/Youmo/comments/14ho5u6) if you have any questions or concerns."
+        reply += "\n\n*I am a bot, and this action was performed automatically. Please [contact me](https://www.reddit.com/r/Youmo/comments/14ho5u6) if you have any questions or concerns.*"
         content.reply(reply)
 
 
