@@ -213,6 +213,18 @@ def remove_bot_statement(str):
     return "\n".join(str.strip().split("\n")[:-1]).strip()
 
 
+# 删除多余的回复格式
+def remove_extra_format(str):
+    pattern = r'回复[^：]*：(.*)'
+    result = re.search(pattern, str, re.S)
+    if result is None:
+        return str
+    result = result.group(1).strip()
+    if result.startswith("“") and result.endswith("”"):
+        result = result[1:-1]
+    return result
+
+
 def build_comment_context(comment, ancestors):
     submission = reddit.submission(comment.link_id[3:])
     context_str = f'[system](#context)\n以下是{sub_user_nickname} {submission.author} 发的贴子。\n'
@@ -327,7 +339,8 @@ async def sydney_reply(content, context, method="random"):
             bot = await Chatbot.create()
             response = await bot.ask(prompt=ask_string, webpage_context=context, conversation_style=ConversationStyle.creative)
             await bot.close()
-            reply = response["item"]["messages"][1]["adaptiveCards"][0]["body"][0]["text"]
+            reply = remove_extra_format(
+                response["item"]["messages"][1]["adaptiveCards"][0]["body"][0]["text"])
             print("reply = " + reply)
             if "sorry" in reply or "Sorry" in reply or "try" in reply or "mistake" in reply:
                 print("Failed attempt, trying again...")
