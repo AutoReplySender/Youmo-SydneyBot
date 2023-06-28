@@ -9,6 +9,7 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 import bleach
 import asyncio
 import re
+import emoji
 
 bot_name = ""  # 账号名称
 password = ""  # 账号密码
@@ -225,6 +226,16 @@ def remove_extra_format(str):
     return result
 
 
+# 删除回复被中断时回复最末尾未完成的句子
+def remove_incomplete_sentence(str):
+    pattern = r"(.*[！!?？。…])"
+    result = re.search(pattern, str, re.S)
+    if result is not None:
+        return result.group(1).strip()
+    else:
+        return str
+
+
 def build_comment_context(comment, ancestors):
     submission = reddit.submission(comment.link_id[3:])
     context_str = f'[system](#context)\n以下是{sub_user_nickname} {submission.author} 发的贴子。\n'
@@ -339,8 +350,28 @@ async def sydney_reply(content, context, method="random"):
             bot = await Chatbot.create()
             response = await bot.ask(prompt=ask_string, webpage_context=context, conversation_style=ConversationStyle.creative)
             await bot.close()
-            reply = remove_extra_format(
-                response["item"]["messages"][1]["adaptiveCards"][0]["body"][0]["text"])
+
+            # 检测到消息中断时尝试进行一次补全
+            if response.get("type") == 2 and response["item"]["messages"][-1]["contentOrigin"] == "Apology":
+                reply = response["item"]["messages"][1]["adaptiveCards"][0]["body"][0]["text"].strip(
+                )
+                if emoji.is_emoji(reply[-1]) or reply[-1] in ["！", "!", "?", "？", "。", "…"]:
+                    reply = remove_extra_format(reply)
+                else:
+                    print("preserved reply = " + reply)
+                    reply = remove_incomplete_sentence(reply)
+                    print("processed preserved reply = " + reply)
+                    context_extended = f"{context}\n\n[user](#message)\n{ask_string}\n[assistant](#message)\n{reply}"
+                    ask_string_extended = f"Continue from where you stopped."
+                    print("Trying to extend the reply...")
+                    bot = await Chatbot.create()
+                    response = await bot.ask(prompt=ask_string_extended, webpage_context=context_extended, conversation_style=ConversationStyle.creative)
+                    await bot.close()
+                    reply += response["item"]["messages"][1]["adaptiveCards"][0]["body"][0]["text"]
+                    reply = remove_extra_format(reply)
+            else:
+                reply = remove_extra_format(
+                    response["item"]["messages"][1]["adaptiveCards"][0]["body"][0]["text"])
             print("reply = " + reply)
             if "sorry" in reply or "Sorry" in reply or "try" in reply or "mistake" in reply:
                 print("Failed attempt, trying again...")
