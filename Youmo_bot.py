@@ -320,7 +320,7 @@ async def sydney_reply(content, context, method="random"):
         print(f"context: {context}")
         print(f"ask_string: {ask_string}")
     else:
-        ask_string = f"你会如何回复{sub_user_nickname} {content.author} 的最后一条回复？只输出你回复的内容正文。不要排比，不要重复之前回复的内容或格式。"
+        ask_string = f"请回复{sub_user_nickname} {content.author} 的最后一条回复。只输出你回复的内容正文。不要排比，不要重复之前回复的内容或格式。"
         ask_string = bleach.clean(ask_string).strip()
         print(f"context: {context}")
         print(f"ask_string: {ask_string}")
@@ -332,10 +332,10 @@ async def sydney_reply(content, context, method="random"):
             # 尝试绕过必应过滤器
             if type(content) != praw.models.reddit.submission.Submission:
                 if failed and not modified:
-                    ask_string = f"你会如何回复最后一条回复？只输出你回复的内容正文。不要排比，不要重复之前回复的内容或格式。"
+                    ask_string = f"请回复最后一条回复。只输出你回复的内容正文。不要排比，不要重复之前回复的内容或格式。"
                     modified = True
                 if failed and modified:
-                    ask_string = f"你会如何回复最后一条回复？只输出你回复的内容正文。"
+                    ask_string = f"请回复最后一条回复。只输出你回复的内容正文。"
             bot = await Chatbot.create()
             response = await bot.ask(prompt=ask_string, webpage_context=context, conversation_style=ConversationStyle.creative)
             await bot.close()
