@@ -37,6 +37,8 @@ ignore_name_list = None
 
 blacklist = None  # 拉黑的是滥用本 bot 的用户。除非也想拉黑滥用本 bot 的用户，不建议照搬此名单
 
+bot_statement = "\n\n*我是自动回复机器人鸭鸭，有疑问请[点此联系](https://www.reddit.com/r/Youmo/comments/14ho5u6)。要和我对话请在发言中带上“鸭鸭”。*"
+
 ignored_content = set()
 pickle_path = "./replied.pkl"
 archived_pickle_path = "./replied.pkl.arc"
@@ -257,9 +259,21 @@ def traverse_comments(comment_list, method="random"):
         if check_status(belonging_submission) != "normal":
             ignored_content.add(comment.id)
             continue
+        ancestors = find_comment_ancestors(comment)
+
+        # 串中有回复者拉黑了 bot，则无法回复该串
+        blocked_thread = False
+        for ancestor in ancestors:
+            if check_status(ancestor) == "blocked":
+                blocked_thread = True
+                break
+        if blocked_thread:
+            ignored_content.add(comment.id)
+            continue
+
         ignored_content.add(comment.id)
-        return comment
-    return None
+        return comment, ancestors
+    return None, None
 
 
 def traverse_submissions(submission_list, method="random"):
@@ -307,7 +321,7 @@ async def sydney_reply(content, context, method="random"):
                     ask_string = f"你会如何回复最后一条回复？只输出回复的内容。不要排比，不要重复之前回复的内容或格式。\n"
                     modified = True
                 if failed and modified:
-                    ask_string = f"你会如何回复最后一条回复？只输出回复的内容。"
+                    ask_string = f"你会如何回复最后一条回复？只输出回复的内容。\n"
             bot = await Chatbot.create()
             response = await bot.ask(prompt=ask_string, webpage_context=context, conversation_style=ConversationStyle.creative)
             await bot.close()
@@ -317,7 +331,7 @@ async def sydney_reply(content, context, method="random"):
                 print("Failed attempt, trying again...")
                 failed = True
                 continue
-            reply += "\n\n*我是自动回复机器人鸭鸭，有疑问请[点此联系](https://www.reddit.com/r/Youmo/comments/14ho5u6)。要和我对话请在发言中带上“鸭鸭”。*"
+            reply += bot_statement
             content.reply(reply)
             return
         except Exception as e:
@@ -327,7 +341,7 @@ async def sydney_reply(content, context, method="random"):
     if method == "at_me":
         reply = "抱歉，本贴主贴或评论会触发必应过滤器。这条回复是预置的，仅用于提醒此情况下虽然召唤了bot也无法回复。"
         print("reply = " + reply)
-        reply += "\n\n*我是自动回复机器人鸭鸭，有疑问请[点此联系](https://www.reddit.com/r/Youmo/comments/14ho5u6)。要和我对话请在发言中带上“鸭鸭”。*"
+        reply += bot_statement
         content.reply(reply)
 
 
@@ -352,9 +366,8 @@ def task():
     context_str = submission_list_to_context(submission_list)
     context_str += prompt
     if method == "at_me" or random.random() < comment_rate:
-        comment = traverse_comments(comment_list, method)
+        comment, ancestors = traverse_comments(comment_list, method)
         if comment is not None:
-            ancestors = find_comment_ancestors(comment)
             context_str += build_comment_context(comment, ancestors)
             asyncio.run(sydney_reply(comment, context_str, method))
     if comment is None:
