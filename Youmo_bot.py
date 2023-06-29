@@ -38,7 +38,7 @@ ignore_name_list = None
 
 blacklist = None  # 拉黑的是滥用本 bot 的用户。除非也想拉黑滥用本 bot 的用户，不建议照搬此名单
 
-bot_statement = "\n\n^我是自动回复机器人鸭鸭，有疑问请[点此联系](https://www.reddit.com/r/Youmo/comments/14ho5u6)。\n^要和我对话请在发言中带上“鸭鸭”。"
+bot_statement = "\n\n^*我是自动回复机器人鸭鸭，有疑问请[点此联系](https://www.reddit.com/r/Youmo/comments/14ho5u6)。*\n^*要和我对话请在发言中带上“鸭鸭”。*"
 
 ignored_content = set()
 pickle_path = "./replied.pkl"
@@ -210,16 +210,16 @@ def build_submission_context(submission):
 
 
 # 删除 bot 回复末尾声明自己是 bot 的话
-def remove_bot_statement(str):
-    return "\n".join(str.strip().split("\n")[:-1]).strip()
+def remove_bot_statement(reply: str) -> str:
+    return "\n".join(reply.strip().split("\n")[:-1]).strip()
 
 
 # 删除多余的回复格式
-def remove_extra_format(str):
+def remove_extra_format(reply: str) -> str:
     pattern = r'回复[^：]*：(.*)'
-    result = re.search(pattern, str, re.S)
+    result = re.search(pattern, reply, re.S)
     if result is None:
-        return str
+        return reply
     result = result.group(1).strip()
     if result.startswith("“") and result.endswith("”"):
         result = result[1:-1]
@@ -227,13 +227,24 @@ def remove_extra_format(str):
 
 
 # 删除回复被中断时回复最末尾未完成的句子
-def remove_incomplete_sentence(str):
+def remove_incomplete_sentence(reply: str) -> str:
     pattern = r"(.*[！!?？。…])"
-    result = re.search(pattern, str, re.S)
+    result = re.search(pattern, reply, re.S)
     if result is not None:
         return result.group(1).strip()
     else:
-        return str
+        return reply
+
+
+# 拼接字符串，去除首尾重复部分
+def concat_reply(former_str: str, latter_str: str) -> str:
+    former_str = former_str.strip()
+    latter_str = latter_str.strip()
+    min_length = min(len(former_str), len(latter_str))
+    for i in range(min_length, 0, -1):
+        if former_str[-i:] == latter_str[:i]:
+            return former_str + latter_str[i:]
+    return former_str + latter_str
 
 
 def build_comment_context(comment, ancestors):
@@ -367,7 +378,9 @@ async def sydney_reply(content, context, method="random"):
                     bot = await Chatbot.create()
                     response = await bot.ask(prompt=ask_string_extended, webpage_context=context_extended, conversation_style=ConversationStyle.creative)
                     await bot.close()
-                    reply += response["item"]["messages"][1]["adaptiveCards"][0]["body"][0]["text"]
+                    extended_reply = response["item"]["messages"][1]["adaptiveCards"][0]["body"][0]["text"]
+                    if "回复" not in extended_reply:
+                        reply = concat_reply(reply, extended_reply)
                     reply = remove_extra_format(reply)
             else:
                 reply = remove_extra_format(
