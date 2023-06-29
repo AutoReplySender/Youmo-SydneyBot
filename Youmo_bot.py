@@ -38,7 +38,7 @@ ignore_name_list = None
 
 blacklist = None  # 拉黑的是滥用本 bot 的用户。除非也想拉黑滥用本 bot 的用户，不建议照搬此名单
 
-bot_statement = "\n\n*我是自动回复机器人鸭鸭，有疑问请[点此联系](https://www.reddit.com/r/Youmo/comments/14ho5u6)。要和我对话请在发言中带上“鸭鸭”。*"
+bot_statement = "\n\n^我是自动回复机器人鸭鸭，有疑问请[点此联系](https://www.reddit.com/r/Youmo/comments/14ho5u6)。\n^要和我对话请在发言中带上“鸭鸭”。"
 
 ignored_content = set()
 pickle_path = "./replied.pkl"
@@ -377,6 +377,7 @@ async def sydney_reply(content, context, method="random"):
                 print("Failed attempt, trying again...")
                 failed = True
                 continue
+
             reply += bot_statement
             content.reply(reply)
             return
