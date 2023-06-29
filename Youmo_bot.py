@@ -211,7 +211,7 @@ def build_submission_context(submission):
 
 # 删除 bot 回复末尾声明自己是 bot 的话
 def remove_bot_statement(reply: str) -> str:
-    return "\n".join(reply.strip().split("\n")[:-1]).strip()
+    return "\n\n".join(reply.strip().split("\n\n")[:-1]).strip()
 
 
 # 删除多余的回复格式
