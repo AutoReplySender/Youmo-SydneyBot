@@ -9,7 +9,6 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 import bleach
 import asyncio
 import re
-import emoji
 
 bot_name = ""  # 账号名称
 password = ""  # 账号密码
@@ -58,7 +57,6 @@ prompt = '''
 
 ## 行动规则
 - 不要联网搜索。
-- 不要使用emoji。
 - 不要随意骂人。
 - **禁止**使用排比，无论是排比句、排比短语或者变相排比全都**禁止** 。
 - **禁止**在同一条回复中反复重复同一句话，**禁止**在同一条回复中反复重复含义相近、措辞相近的话。
@@ -332,6 +330,10 @@ def traverse_submissions(submission_list, method="random"):
         return submission
     return None
 
+def remove_emojis(string: str) -> str:
+    # only removes emoticons like 😅
+    emoji_regex = re.compile("["u"\U0001F600-\U0001F64F""]+", re.UNICODE)
+    return re.sub(emoji_regex, '', string)
 
 async def sydney_reply(content, context, method="random"):
     context = bleach.clean(context).strip()
@@ -366,7 +368,7 @@ async def sydney_reply(content, context, method="random"):
             if response.get("type") == 2 and response["item"]["messages"][-1]["contentOrigin"] == "Apology":
                 reply = response["item"]["messages"][1]["adaptiveCards"][0]["body"][0]["text"].strip(
                 )
-                if emoji.is_emoji(reply[-1]) or reply[-1] in ["！", "!", "?", "？", "。", "…"]:
+                if reply[-1] in ["！", "!", "?", "？", "。", "…"]:
                     reply = remove_extra_format(reply)
                 else:
                     print("preserved reply = " + reply)
@@ -391,6 +393,7 @@ async def sydney_reply(content, context, method="random"):
                 failed = True
                 continue
 
+            reply = remove_emojis(reply)
             reply += bot_statement
             content.reply(reply)
             return
